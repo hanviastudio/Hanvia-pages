@@ -66,6 +66,15 @@ td.chk input:disabled{cursor:not-allowed;opacity:.5}
 tr.done td{color:var(--muted)}
 tr.done td.ko{text-decoration:line-through;text-decoration-color:var(--ok);font-weight:500}
 .d-ko{margin-top:4px;color:var(--fg);opacity:.85}
+.cp{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border-radius:6px;padding:2px 6px;margin:-2px -6px;max-width:100%}
+.cp:hover{background:var(--accent-soft)}
+.cp .ic{flex:none;width:14px;height:14px;opacity:.35}
+.cp:hover .ic{opacity:1;color:var(--accent)}
+.cp.copied{background:var(--ok-soft)} .cp.copied .ic{opacity:1;color:var(--ok)}
+.cp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+td.desc .cp{display:flex;align-items:flex-start}
+.cathead .cp{margin:0;padding:2px 6px}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 10px}
 
 footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 footer p{margin:4px 0}
@@ -102,6 +111,7 @@ footer p{margin:4px 0}
 <p class="note" id="note-sync">☐ 체크 상태는 이 브라우저에 저장됩니다 (같은 컴퓨터에서 다시 열면 그대로 남아 있어요).</p>
 <p class="note ro" id="note-ro" hidden>이 브라우저에서는 체크 상태가 저장되지 않아요 (시크릿 창이거나 저장이 차단됨). 메뉴 내용은 그대로 보실 수 있습니다.</p>
 
+<p class="hint">카테고리명·메뉴명·설명을 클릭하면 그 텍스트가 바로 복사됩니다. Zorder 관리자에 붙여넣기만 하세요.</p>
 <div id="list"></div>
 
 <footer>
@@ -180,18 +190,28 @@ let db = null, canWrite = true;
 const $ = s => document.querySelector(s);
 const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+const IC = '<svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg>';
+async function copyCell(el){
+  const text = el.dataset.copy;
+  try { await navigator.clipboard.writeText(text); }
+  catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("선택된 텍스트를 Ctrl+C로 복사하세요"); return; }
+  el.classList.add("copied"); setTimeout(() => el.classList.remove("copied"), 900);
+  toast("복사됨: " + (text.length > 40 ? text.slice(0, 40) + "…" : text));
+}
+document.addEventListener("click", e => { const el = e.target.closest(".cp"); if (el) copyCell(el); });
+document.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { const el = e.target.closest?.(".cp"); if (el) { e.preventDefault(); copyCell(el); } } });
 function render(){
   const list = $("#list"); list.innerHTML = "";
   CATS.forEach((c, ci) => {
     const sec = document.createElement("section"); sec.className = "cat";
     const doneN = c.items.filter(it => state[it[0]]?.done).length;
-    sec.innerHTML = `<div class="cathead"><span class="idx">${String(ci+1).padStart(2,"0")}</span><h2>${esc(c.en)} <span class="en">| ${esc(c.ko)}</span></h2><span class="cnt">${doneN}/${c.items.length} 완료</span></div>
+    sec.innerHTML = `<div class="cathead"><span class="idx">${String(ci+1).padStart(2,"0")}</span><h2><span class="cp" tabindex="0" role="button" title="카테고리명 복사" data-copy="${esc(c.en)} | ${esc(c.ko)}">${esc(c.en)} <span class="en">| ${esc(c.ko)}</span>${IC}</span></h2><span class="cnt">${doneN}/${c.items.length} 완료</span></div>
     <div class="tablewrap"><table><thead><tr><th>메뉴명 (한글)</th><th>메뉴명 (영문)</th><th>설명 (영문 / 한글)</th><th class="chk">사진</th><th class="chk">완료</th></tr></thead><tbody></tbody></table></div>`;
     const tb = sec.querySelector("tbody");
     c.items.forEach(it => {
       const st = state[it[0]] || {};
       const tr = document.createElement("tr"); if (st.done) tr.className = "done";
-      tr.innerHTML = `<td class="ko">${esc(it[1])}</td><td class="en">${esc(it[2])}</td><td class="desc"><div class="d-en">${esc(it[3])}</div><div class="d-ko">${esc(it[4])}</div></td>
+      tr.innerHTML = `<td class="ko"><span class="cp" tabindex="0" role="button" title="복사" data-copy="${esc(it[1])}">${esc(it[1])}${IC}</span></td><td class="en"><span class="cp" tabindex="0" role="button" title="복사" data-copy="${esc(it[2])}">${esc(it[2])}${IC}</span></td><td class="desc"><div class="d-en"><span class="cp" tabindex="0" role="button" title="영문 설명 복사" data-copy="${esc(it[3])}">${esc(it[3])}${IC}</span></div><div class="d-ko"><span class="cp" tabindex="0" role="button" title="한글 설명 복사" data-copy="${esc(it[4])}">${esc(it[4])}${IC}</span></div></td>
       <td class="chk"><input type="checkbox" id="p-${it[0]}" data-id="${it[0]}" data-k="photo" aria-label="${esc(it[1])} 사진" ${st.photo?"checked":""} ${canWrite?"":"disabled"}></td>
       <td class="chk"><input type="checkbox" id="d-${it[0]}" data-id="${it[0]}" data-k="done" aria-label="${esc(it[1])} 완료" ${st.done?"checked":""} ${canWrite?"":"disabled"}></td>`;
       tb.appendChild(tr);
