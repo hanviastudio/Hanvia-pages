@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>KoteDaeji Zorder 메뉴 체크리스트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one working sheet — sticky progress bar, then category blocks each as a table; two checkbox columns at the right edge for 사진 and 완료. */
+:root{
+  --bg:#faf7f2; --surface:#ffffff; --fg:#1e1a17; --muted:#6e655d; --line:#e3dbd1;
+  --accent:#c8321f; --accent-soft:#fbe9e5; --ok:#2e7d4f; --ok-soft:#e3f2e8;
+  --font-body:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17130f; --surface:#211c17; --fg:#f1e9e0; --muted:#a69a8e; --line:#3a312a;
+  --accent:#ef5a44; --accent-soft:#3a1d18; --ok:#5fbf86; --ok-soft:#1d3326; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17130f; --surface:#211c17; --fg:#f1e9e0; --muted:#a69a8e; --line:#3a312a;
+  --accent:#ef5a44; --accent-soft:#3a1d18; --ok:#5fbf86; --ok-soft:#1d3326; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1040px;margin:0 auto}
+header{padding-block:28px 16px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(24px,4vw,34px);font-weight:900;margin:4px 0 6px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.store{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:13px;color:var(--muted)}
+.store b{color:var(--fg);font-weight:500}
+
+.progress{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin-block:8px 20px}
+.stat{display:flex;align-items:baseline;gap:8px}
+.stat .n{font-family:var(--font-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .l{font-size:13px;color:var(--muted)}
+.bar{flex:1 1 180px;height:8px;background:var(--line);border-radius:999px;overflow:hidden;min-width:120px}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+button{font:inherit;font-size:13px;font-weight:500;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--fg)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:13px;color:var(--muted);margin:0 0 16px;display:flex;gap:8px;align-items:flex-start}
+.note.ro{color:var(--accent)}
+.note[hidden]{display:none}
+
+section.cat{margin-block:0 26px}
+.cathead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid var(--fg)}
+.cathead .idx{font-family:var(--font-mono);font-size:13px;color:var(--accent)}
+.cathead h2{font-size:18px;font-weight:700;margin:0}
+.cathead .en{font-size:14px;color:var(--muted);font-weight:400}
+.cathead .cnt{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{font-size:12px;font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);letter-spacing:.04em}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.ko{font-weight:700;white-space:nowrap}
+td.en{color:var(--fg);min-width:170px}
+td.desc{color:var(--muted);font-size:13.5px;min-width:260px;max-width:52ch}
+th.chk,td.chk{width:64px;text-align:center;white-space:nowrap}
+td.chk input{width:20px;height:20px;accent-color:var(--ok);cursor:pointer;margin:0;vertical-align:middle}
+td.chk input:disabled{cursor:not-allowed;opacity:.5}
+tr.done td{color:var(--muted)}
+tr.done td.ko{text-decoration:line-through;text-decoration-color:var(--ok);font-weight:500}
+.d-ko{margin-top:4px;color:var(--fg);opacity:.85}
+
+footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+footer p{margin:4px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (max-width:560px){table{min-width:560px} .actions{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.bar i,.toast{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Zorder Tablet · Menu Update</div>
+  <h1>수상한꽃돼지 메뉴 최신화 체크리스트</h1>
+  <p class="lede">Zorder 태블릿에 올릴 최종 메뉴입니다. 카테고리 순서와 메뉴 순서는 아래 그대로 적용해 주세요. 카테고리명은 「영문 | 한글」, 메뉴명은 「한글 · 영문」, 설명은 영문과 한글을 둘 다 넣습니다. 항목마다 사진 등록과 입력 완료를 체크해 주세요.</p>
+  <div class="store">
+    <span>매장 <b>Soosanghan KoteDaeji (수상한꽃돼지)</b></span>
+    <span>주소 <b>8 Henry Ave, Palisades Park, NJ</b></span>
+  </div>
+</header>
+
+<div class="progress" id="progress">
+  <div class="stat"><span class="n" id="n-total">0</span><span class="l">메뉴</span></div>
+  <div class="stat"><span class="n" id="n-photo">0</span><span class="l">사진 등록</span></div>
+  <div class="stat"><span class="n" id="n-done">0</span><span class="l">입력 완료</span></div>
+  <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+  <div class="actions">
+    <button type="button" id="btn-copy">텍스트로 복사</button>
+    <button type="button" id="btn-csv">CSV 복사</button>
+  </div>
+</div>
+
+<p class="note" id="note-sync">☐ 체크 상태는 이 브라우저에 저장됩니다 (같은 컴퓨터에서 다시 열면 그대로 남아 있어요).</p>
+<p class="note ro" id="note-ro" hidden>이 브라우저에서는 체크 상태가 저장되지 않아요 (시크릿 창이거나 저장이 차단됨). 메뉴 내용은 그대로 보실 수 있습니다.</p>
+
+<div id="list"></div>
+
+<footer>
+  <p><b>카테고리 표기 규칙</b>: 사이드바에는 「영문 | 한글」 순서로 한 줄에 (예: Korean BBQ - Pork | 돼지고기). 브랜드명은 KoteDaeji로 통일.</p>
+  <p><b>가격</b>: 세금 포함 역산 금액(예 $18.63)이 아닌 깔끔한 소비자가로 입력하고, 세금은 체크아웃 단계에서 적용해 주세요.</p>
+  <p><b>기존 「기본찬 Basic Soup $0.00」 항목</b>은 삭제해 주세요.</p>
+</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const CATS = [
+ {id:"combo", en:"KoteDaeji Combo", ko:"꽃돼지 콤보", items:[
+  ["combo-pork-s","돼지 콤보 (소, 2~3인)","Pork Combo Small (2–3)","For 2–3 people. 3 meats + banchan (side dishes) + steamed egg + stew.","2~3인용. 고기 3종 + 반찬 + 계란찜 + 찌개."],
+  ["combo-pork-l","돼지 콤보 (대, 3~4인)","Pork Combo Large (3–4)","For 3–4 people. 3 meats + banchan (side dishes) + steamed egg + stew.","3~4인용. 고기 3종 + 반찬 + 계란찜 + 찌개."],
+  ["combo-duroc-s","듀록 콤보 (소, 2~3인)","Duroc Combo Small (2–3)","For 2–3 people. 3 Duroc meats + banchan (side dishes) + steamed egg + stew.","2~3인용. 듀록 고기 3종 + 반찬 + 계란찜 + 찌개."],
+  ["combo-duroc-l","듀록 콤보 (대, 3~4인)","Duroc Combo Large (3–4)","For 3–4 people. 3 Duroc meats + banchan (side dishes) + steamed egg + stew.","3~4인용. 듀록 고기 3종 + 반찬 + 계란찜 + 찌개."]]},
+ {id:"pork", en:"Korean BBQ - Pork", ko:"돼지고기", items:[
+  ["pork-naengsam","냉동삼겹살","Frozen Thin-Sliced Pork Belly (Naengsam)","Fresh pork belly flash-frozen at low temperature to lock in the juices, then sliced thin. Grilled quickly in its own rendered fat, each slice comes out crispy on the outside and juicy inside. A Korean classic since the '80s.","신선한 생삼겹살을 저온에서 빠르게 얼려 육즙을 가둔 뒤 얇게 썰었습니다. 돼지기름에 빠르게 구우면 겉은 바삭하고 속은 육즙이 살아 있어요. 80년대부터 사랑받아 온 한국식 냉삼."],
+  ["pork-aged-belly","숙성삼겹살","Aged Pork Belly","Thick-cut pork belly aged 7–10 days in house. Aging deepens the pork's natural flavor and makes the meat more tender than fresh belly. Our signature cut; grill slowly and cut with scissors at the table.","두툼한 삼겹살을 7~10일간 자체 숙성했습니다. 숙성으로 돼지고기 본연의 맛이 깊어지고 생삼겹보다 훨씬 부드러워져요. 꽃돼지 시그니처. 천천히 구워 가위로 잘라 드세요."],
+  ["pork-aged-collar","숙성목살","Aged Pork Collar (Moksal)","Pork collar aged 7–10 days, a shoulder cut with fine marbling running through lean meat. Chewier and meatier than belly, with a clean pork flavor and juices kept in by the aging. Great if you want less fat.","7~10일 숙성한 목살. 살코기 사이사이에 가는 마블링이 박힌 어깨 부위라 삼겹보다 씹는 맛이 있고 담백해요. 숙성으로 육즙은 살아 있어 기름기 적은 고기를 찾는 분께 추천."],
+  ["pork-jowl","항정살","Pork Jowl (Hangjeongsal)","Pork jowl: the prized cut from the neck, only a few hundred grams per pig. Pale pink with dense marbling, it grills up snappy-chewy on the outside and buttery inside. Dip in salt and sesame oil to taste the meat itself.","돼지 한 마리에서 몇백 그램밖에 안 나오는 귀한 목덜미 부위. 연한 분홍빛에 마블링이 촘촘해 겉은 쫄깃, 속은 버터처럼 고소합니다. 기름소금에 찍어 고기 본연의 맛으로 드세요."],
+  ["pork-galbi","돼지갈비","Marinated Pork Ribs (Dwaeji Galbi)","Pork ribs marinated overnight in our sweet soy, garlic and pear sauce, old-school style. The sugars caramelize on the grill into a sticky, smoky glaze. Wrap in lettuce with ssamjang and garlic.","간장·마늘·배를 넣은 양념에 하룻밤 재운 옛날식 돼지갈비. 불판에서 양념이 캐러멜처럼 졸아들어 달콤하고 불맛이 배어요. 상추에 쌈장·마늘과 함께 싸서 드세요."]]},
+ {id:"beef", en:"Korean BBQ - Beef", ko:"소고기", items:[
+  ["beef-chadol","차돌박이","Beef Brisket (Chadol)","Beef brisket point shaved paper-thin. Lay it on the grill and it curls and cooks in seconds; the fat melts into the meat for a rich, buttery bite. Dip in soy-wasabi sauce and eat with scallion salad.","종이처럼 얇게 썬 차돌박이. 불판에 올리면 몇 초 만에 오그라들며 익고, 기름이 녹아들어 고소하고 부드러워요. 와사비 간장에 찍어 파절이와 함께 드세요."],
+  ["beef-tritip","와규 삼각살","Wagyu Tri-Tip","Wagyu tri-tip, a triangular cut from the bottom sirloin. Bold beef flavor with a satisfying chew and marbling that keeps it juicy. Cook to medium and slice against the grain.","소 한 마리에서 조금밖에 안 나오는 삼각 모양의 설도 부위. 진한 소고기 맛에 씹는 맛이 좋고, 마블링 덕에 육즙이 살아 있어요. 미디엄으로 구워 결 반대로 썰어 드세요."],
+  ["beef-chuckflap","와규 새우살","Wagyu Chuck Flap Tail","Wagyu chuck flap tail, a cut from the shoulder named in Korea for its shrimp-like shape. Fine marbling spreads through the whole slice, so it melts on the tongue. Sear briefly on each side.","새우 모양을 닮아 새우살이라 부르는 어깨 부위. 고운 마블링이 고르게 퍼져 있어 입에서 녹듯 부드러워요. 양면을 짧게 구워 드세요."],
+  ["beef-flatiron","와규 부채살","Wagyu Flat Iron","Wagyu flat iron, cut from the shoulder blade with a thin line of tendon down the middle. Tender with a clean, mild beef flavor; the tendon turns pleasantly chewy when grilled. Best at medium-rare.","부채 모양의 어깨 부위. 가운데 가는 힘줄이 지나가는데 구우면 쫄깃하게 변해요. 부드럽고 담백한 소고기 맛. 미디엄 레어로 드시면 가장 맛있습니다."],
+  ["beef-salchi","와규 살치살","Wagyu Ribeye Cap (Salchi)","Wagyu ribeye cap, the outer rim of the ribeye and the most marbled cut on our menu. Intensely rich and juicy; a few seconds on each side is all it needs. The cut to order when you want the best.","꽃등심 바깥쪽을 감싸는 부위로 저희 메뉴 중 마블링이 가장 풍부해요. 진하고 육즙이 넘쳐 양면 몇 초면 충분합니다. 가장 좋은 걸 드시고 싶을 때 고르세요."]]},
+ {id:"duck", en:"Korean BBQ - Duck", ko:"오리고기", items:[
+  ["duck-roast","오리로스","Sliced Duck Breast (Ori Roast)","Duck breast sliced thin for the grill. Leaner than pork with a deep, savory flavor; the skin crisps up while the meat stays tender. Eat with perilla leaf, garlic and a touch of mustard sauce.","얇게 썬 오리 가슴살 구이. 돼지보다 기름이 적고 맛은 진하고 담백해요. 껍질은 바삭, 살은 부드럽게 구워집니다. 깻잎·마늘·겨자소스와 함께 드세요."]]},
+ {id:"app", en:"Appetizers", ko:"에피타이저", items:[
+  ["app-steamed-egg","계란찜","Steamed Egg (Gyeran-jjim)","Fluffy steamed egg in a hot stone pot. A grill-side classic.","뚝배기에 보글보글 올라오는 폭신한 계란찜. 고깃집 기본 안주."],
+  ["app-omelet","계란말이","Rolled Omelet (Gyeran-mari)","Korean rolled omelet with scallions and carrots. Soft and lightly seasoned.","파와 당근을 넣어 돌돌 만 계란말이. 부드럽고 심심하게 간을 했어요."],
+  ["app-kimchi-pancake","김치파전","Kimchi Pancake","Crispy pan-fried kimchi pancake. Tangy, spicy and great with soju.","바삭하게 부친 김치전. 새콤매콤해서 소주 안주로 최고."],
+  ["app-seafood-pancake","해물파전","Seafood Scallion Pancake","Crispy scallion pancake loaded with squid and shrimp.","오징어와 새우를 듬뿍 넣은 바삭한 해물파전."]]},
+ {id:"noodle", en:"Noodles", ko:"면류", items:[
+  ["nd-mul","물냉면","Cold Noodles in Broth (Mul-naengmyeon)","Chewy buckwheat noodles in icy, tangy beef broth. The classic BBQ finisher.","살얼음 육수에 쫄깃한 메밀면. 고기 먹고 마무리로 딱."],
+  ["nd-bibim-naeng","비빔냉면","Spicy Cold Noodles (Bibim-naengmyeon)","Chewy buckwheat noodles tossed in a sweet and spicy sauce. No broth.","매콤달콤한 양념에 비빈 메밀면. 육수 없이 비벼 먹어요."],
+  ["nd-perilla","들기름막국수","Perilla Oil Buckwheat Noodles","Buckwheat noodles with perilla oil, soy and seaweed. Nutty and mild, not spicy.","들기름·간장·김가루에 비빈 막국수. 고소하고 안 매워요."],
+  ["nd-manghyang","망향비빔막국수","Spicy Buckwheat Noodles (Manghyang-style)","Buckwheat noodles in a bold, sweet-spicy sauce, famous highway-stop style.","휴게소 스타일의 진한 매콤달콤 양념 막국수."],
+  ["nd-bibimmyeon","비빔면","Spicy Mixed Noodles (Bibim-myeon)","Thin wheat noodles tossed in a spicy, tangy sauce. Served cold.","새콤매콤한 양념에 비빈 차가운 비빔면."],
+  ["nd-jjapaghetti","짜파게티","Jjapaghetti (Black Bean Noodles)","Instant black bean noodles, a Korean comfort favorite. Add a fried egg.","한국인의 소울푸드 짜파게티. 계란후라이 추가 추천."]]},
+ {id:"rice", en:"Rice & Stew", ko:"밥 · 찌개", items:[
+  ["rc-kkakdugi","깍두기볶음밥","Kkakdugi Fried Rice","Fried rice with radish kimchi, a crispy bottom and a fried egg on top.","깍두기를 넣고 볶아 누룽지처럼 바삭한 볶음밥. 계란후라이 올려 드려요."],
+  ["rc-shin","신라면볶음밥","Shin Ramyun Fried Rice","Fried rice cooked with Shin Ramyun noodles and seasoning. Spicy and addictive.","신라면 면과 스프로 볶은 매콤한 볶음밥."],
+  ["rc-dosirak","옛날도시락","Old-School Lunchbox (Dosirak)","Rice, fried egg, pink sausage and kimchi in a tin lunchbox. Close the lid and shake it up.","양은 도시락에 밥·계란후라이·분홍 소시지·김치. 뚜껑 닫고 흔들어 드세요."],
+  ["rc-kimchi-stew","김치찌개","Kimchi Stew","Aged kimchi stew with pork, served bubbling. Comes with rice.","묵은지와 돼지고기를 넣고 끓인 김치찌개. 공기밥 포함."],
+  ["rc-doenjang","된장찌개","Soybean Paste Stew (Doenjang-jjigae)","Hearty soybean paste stew with tofu and vegetables. Comes with rice.","두부와 야채를 넣은 구수한 된장찌개. 공기밥 포함."],
+  ["rc-cheonggukjang","청국장","Fermented Soybean Stew (Cheonggukjang)","Bold, funky fermented soybean stew with tofu and kimchi. Comes with rice.","두부와 김치를 넣고 끓인 진한 청국장. 공기밥 포함."]]},
+ {id:"special", en:"KoteDaeji Specials", ko:"꽃돼지 스페셜", items:[
+  ["sp-jokbal","족발","Braised Pork Trotters (Jokbal)","Soy-braised pork trotters, sliced and served with salted shrimp sauce and ssam.","간장에 푹 삶아 썰어낸 족발. 새우젓과 쌈 채소를 곁들여 드려요."],
+  ["sp-bul-jokbal","불족발","Spicy Jokbal","Braised pork trotters tossed in a fiery gochujang glaze.","매운 고추장 양념에 버무린 불족발."],
+  ["sp-half-jokbal","반반족발","Half & Half Jokbal (Original + Spicy)","Half braised, half spicy pork trotters. Best of both.","족발 반, 불족발 반. 둘 다 맛보고 싶을 때."],
+  ["sp-donkatsu","옛날 왕돈까스","Old-School Jumbo Pork Cutlet","Giant thin-pounded pork cutlet with brown gravy, 1990s diner style.","얇고 큼직하게 두드려 튀긴 경양식 돈까스. 브라운 소스."],
+  ["sp-gopchang","곱창전골","Beef Intestine Hot Pot (Gopchang Jeongol)","Spicy beef intestine hot pot with vegetables and glass noodles, cooked at the table.","소곱창에 야채와 당면을 넣고 테이블에서 끓여 먹는 얼큰한 전골."],
+  ["sp-nakgopsae","낙곱새","Octopus, Intestine & Shrimp Hot Pot (Nakgopsae)","Spicy table-top hot pot with octopus, beef intestine and shrimp. Finish with fried rice.","낙지·곱창·새우를 넣은 매콤한 전골. 볶음밥으로 마무리."],
+  ["sp-budae","부대찌개","Army Stew (Budae-jjigae)","Spicy stew with spam, sausage, kimchi, beans and ramen noodles. Comes with rice.","스팸·소시지·김치·베이크드빈에 라면사리까지. 공기밥 포함."]]},
+ {id:"stirfry", en:"Stir-Fried", ko:"볶음", items:[
+  ["sf-jeyuk","제육볶음","Spicy Stir-Fried Pork (Jeyuk)","Thin pork stir-fried in sweet-spicy gochujang sauce. Comes with rice.","매콤달콤한 고추장 양념에 볶은 돼지고기. 공기밥 포함."],
+  ["sf-osam","오삼볶음","Spicy Squid & Pork Belly","Squid and pork belly stir-fried in spicy sauce. Comes with rice.","오징어와 삼겹살을 매콤하게 볶았어요. 공기밥 포함."],
+  ["sf-nakji","낙지볶음","Spicy Stir-Fried Octopus (Nakji)","Octopus stir-fried in a spicy gochujang sauce with vegetables. Comes with rice.","낙지를 야채와 함께 고추장 양념에 매콤하게 볶았어요. 공기밥 포함."],
+  ["sf-jjusam","쭈삼볶음","Spicy Baby Octopus & Pork Belly","Baby octopus and pork belly stir-fried in spicy sauce. Comes with rice.","쭈꾸미와 삼겹살을 매콤하게 볶았어요. 공기밥 포함."]]},
+ {id:"addon", en:"Add-ons", ko:"추가 메뉴", items:[
+  ["ad-rice","공기밥","Steamed Rice","Bowl of steamed white rice.","흰쌀밥 한 공기."],
+  ["ad-egg","계란후라이","Fried Egg","Sunny-side-up egg.","계란후라이 1개."],
+  ["ad-ramyun","라면사리","Ramyun Noodles (add-on)","Extra ramen noodles for your stew or hot pot.","찌개·전골에 넣는 라면사리."],
+  ["ad-ssamjang","명란쌈장","Myeongnan Ssamjang (Cod Roe Dipping Sauce)","Our ssamjang mixed with salted cod roe. Spread it on the meat.","명란젓을 섞은 쌈장. 고기에 발라 드세요."]]}
+];
+
+const ALL = []; CATS.forEach(c => c.items.forEach(it => ALL.push({cat:c, id:it[0], ko:it[1], en:it[2], descEn:it[3], descKo:it[4]})));
+const state = {};            // id -> {photo, done}
+let db = null, canWrite = true;
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const list = $("#list"); list.innerHTML = "";
+  CATS.forEach((c, ci) => {
+    const sec = document.createElement("section"); sec.className = "cat";
+    const doneN = c.items.filter(it => state[it[0]]?.done).length;
+    sec.innerHTML = `<div class="cathead"><span class="idx">${String(ci+1).padStart(2,"0")}</span><h2>${esc(c.en)} <span class="en">| ${esc(c.ko)}</span></h2><span class="cnt">${doneN}/${c.items.length} 완료</span></div>
+    <div class="tablewrap"><table><thead><tr><th>메뉴명 (한글)</th><th>메뉴명 (영문)</th><th>설명 (영문 / 한글)</th><th class="chk">사진</th><th class="chk">완료</th></tr></thead><tbody></tbody></table></div>`;
+    const tb = sec.querySelector("tbody");
+    c.items.forEach(it => {
+      const st = state[it[0]] || {};
+      const tr = document.createElement("tr"); if (st.done) tr.className = "done";
+      tr.innerHTML = `<td class="ko">${esc(it[1])}</td><td class="en">${esc(it[2])}</td><td class="desc"><div class="d-en">${esc(it[3])}</div><div class="d-ko">${esc(it[4])}</div></td>
+      <td class="chk"><input type="checkbox" id="p-${it[0]}" data-id="${it[0]}" data-k="photo" aria-label="${esc(it[1])} 사진" ${st.photo?"checked":""} ${canWrite?"":"disabled"}></td>
+      <td class="chk"><input type="checkbox" id="d-${it[0]}" data-id="${it[0]}" data-k="done" aria-label="${esc(it[1])} 완료" ${st.done?"checked":""} ${canWrite?"":"disabled"}></td>`;
+      tb.appendChild(tr);
+    });
+    list.appendChild(sec);
+  });
+  const total = ALL.length, p = ALL.filter(i => state[i.id]?.photo).length, d = ALL.filter(i => state[i.id]?.done).length;
+  $("#n-total").textContent = total; $("#n-photo").textContent = p; $("#n-done").textContent = d;
+  $("#bar").style.width = (total ? d/total*100 : 0) + "%";
+}
+
+const KEY = "kotedaeji-zorder-checks";
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); return true; } catch { return false; } }
+function toggle(id, k, val){
+  const prev = state[id] || {photo:false, done:false};
+  state[id] = {...prev, [k]: val}; render();
+  if (!save()) setReadOnly();
+}
+function setReadOnly(){ canWrite = false; $("#note-sync").hidden = true; $("#note-ro").hidden = false; render(); }
+
+$("#list").addEventListener("change", e => {
+  const el = e.target; if (el.tagName !== "INPUT") return;
+  toggle(el.dataset.id, el.dataset.k, el.checked);
+});
+
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+async function copyText(text, label){
+  try { await navigator.clipboard.writeText(text); toast(label + " 복사됨"); }
+  catch { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); toast("선택된 텍스트를 Ctrl+C로 복사하세요"); }
+}
+$("#btn-copy").addEventListener("click", () => {
+  const lines = []; CATS.forEach((c, i) => { lines.push(`${i+1}. ${c.en} | ${c.ko}`); c.items.forEach(it => lines.push(`   - ${it[1]} · ${it[2]}\n     EN: ${it[3]}\n     KR: ${it[4]}`)); lines.push(""); });
+  copyText(lines.join("\n"), "메뉴 텍스트");
+});
+$("#btn-csv").addEventListener("click", () => {
+  const q = s => '"' + s.replace(/"/g,'""') + '"';
+  const rows = ["카테고리,메뉴명(한글),메뉴명(영문),설명(영문),설명(한글),사진,완료"];
+  ALL.forEach(i => rows.push([q(i.cat.en + " | " + i.cat.ko), q(i.ko), q(i.en), q(i.descEn), q(i.descKo), state[i.id]?.photo ? "TRUE":"FALSE", state[i.id]?.done ? "TRUE":"FALSE"].join(",")));
+  copyText(rows.join("\n"), "CSV");
+});
+
+render();
+
+(() => {
+  try { const raw = localStorage.getItem(KEY); if (raw) Object.assign(state, JSON.parse(raw)); render(); } catch {}
+})();
+</script>
+
+</body>
+</html>
